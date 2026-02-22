@@ -1,3 +1,4 @@
+using Orleans.Configuration;
 using Orleans.Hosting;
 
 namespace Contrib.Orleans.DistributedCache;

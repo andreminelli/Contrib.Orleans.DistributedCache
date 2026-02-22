@@ -11,6 +11,7 @@ namespace Contrib.Orleans.DistributedCache.Grains;
 /// Initializes a new instance of the CacheGrain class.
 /// </remarks>
 /// <param name="state">The persistent state for this grain.</param>
+[KeepAlive]
 public class CacheGrain<T>(
     [PersistentState(stateName: "cache", storageName: "cache-storage")]
     IPersistentState<CacheGrainState<T>> state)
@@ -23,6 +24,7 @@ public class CacheGrain<T>(
     {
         if (!_state.HasValue())
         {
+            DeactivateOnIdle();
             return CacheResult<T>.NotFound;
         }
 
@@ -30,7 +32,7 @@ public class CacheGrain<T>(
 
         if (_state.IsAbsoluteExpired(now) || _state.IsSlidingExpired(now))
         {
-            await _state.ClearAsync();
+            await RemoveAsync();
             return CacheResult<T>.NotFound;
         }
 
@@ -44,10 +46,6 @@ public class CacheGrain<T>(
         => await _state.SetValueAsync(value, absoluteExpiration, slidingExpiration);
 
     /// <inheritdoc/>
-    public async Task RemoveAsync()
-        => await _state.ClearAsync();
-
-    /// <inheritdoc/>
     public async Task RefreshAsync()
     {
         if (!_state.State.HasValue || !_state.State.SlidingExpiration.HasValue)
@@ -59,10 +57,17 @@ public class CacheGrain<T>(
 
         if (_state.IsAbsoluteExpired(now) || _state.IsSlidingExpired(now))
         {
-            await _state.ClearAsync();
+            await RemoveAsync();
             return;
         }
 
         await _state.UpdateLastAccessTimeAsync(now);
+    }
+
+    /// <inheritdoc/>
+    public async Task RemoveAsync()
+    {
+        await _state.ClearAsync();
+        DeactivateOnIdle();
     }
 }
