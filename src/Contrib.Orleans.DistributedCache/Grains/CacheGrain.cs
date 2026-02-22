@@ -23,30 +23,45 @@ public class CacheGrain<T>(
     /// Gets the cached value if it exists and has not expired.
     /// </summary>
     /// <returns>A tuple of (exists, value, expirationTime)</returns>
-    public Task<(bool Exists, T? Value, DateTimeOffset? ExpirationTime)> GetAsync()
+    public async Task<(bool Exists, T? Value, DateTimeOffset? ExpirationTime)> GetAsync()
     {
         if (!_state.State.HasValue)
         {
-            return Task.FromResult<(bool, T?, DateTimeOffset?)>((false, default, null));
+            return (false, default, null);
         }
 
         var now = DateTimeOffset.UtcNow;
 
-        if (_state.State.AbsoluteExpiration <= now)
+        // Check absolute expiration if present
+        if (_state.State.AbsoluteExpiration.HasValue && _state.State.AbsoluteExpiration.Value <= now)
         {
             _state.State.HasValue = false;
-            return Task.FromResult<(bool, T?, DateTimeOffset?)>((false, default, null));
+            await _state.WriteStateAsync();
+            return (false, default, null);
         }
 
-        DateTimeOffset? expirationTime = _state.State.AbsoluteExpiration;
-
+        // Check sliding expiration if present
         if (_state.State.SlidingExpiration.HasValue)
         {
+            var lastAccess = _state.State.LastAccessTime ?? now;
+            var slidingExpireTime = lastAccess.Add(_state.State.SlidingExpiration.Value);
+
+            if (slidingExpireTime <= now)
+            {
+                _state.State.HasValue = false;
+                await _state.WriteStateAsync();
+                return (false, default, null);
+            }
+
+            // Refresh last access time and persist
             _state.State.LastAccessTime = now;
-            expirationTime = now.Add(_state.State.SlidingExpiration.Value);
+            await _state.WriteStateAsync();
+
+            return (true, _state.State.Value, now.Add(_state.State.SlidingExpiration.Value));
         }
 
-        return Task.FromResult<(bool, T?, DateTimeOffset?)>((true, _state.State.Value, expirationTime));
+        // No sliding expiration; return with absolute expiration (may be null)
+        return (true, _state.State.Value, _state.State.AbsoluteExpiration);
     }
 
     /// <summary>
@@ -95,7 +110,19 @@ public class CacheGrain<T>(
 
         var now = DateTimeOffset.UtcNow;
 
-        if (_state.State.AbsoluteExpiration <= now)
+        // Check absolute expiration if present
+        if (_state.State.AbsoluteExpiration.HasValue && _state.State.AbsoluteExpiration.Value <= now)
+        {
+            _state.State.HasValue = false;
+            await _state.WriteStateAsync();
+            return;
+        }
+
+        // Check sliding expiration based on last access
+        var lastAccess = _state.State.LastAccessTime ?? now;
+        var slidingExpireTime = lastAccess.Add(_state.State.SlidingExpiration.Value);
+
+        if (slidingExpireTime <= now)
         {
             _state.State.HasValue = false;
             await _state.WriteStateAsync();
