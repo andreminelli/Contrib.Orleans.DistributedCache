@@ -39,7 +39,7 @@ public class OrleansDistributedCache(IGrainFactory grainFactory) : IDistributedC
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(key);
 
-        var grain = _grainFactory.GetGrain<ICacheGrain<byte[]>>(key);
+        var grain = GetGrain(key);
         var result = await grain.GetAsync();
 
         return result.Exists ? result.Value : null;
@@ -76,7 +76,7 @@ public class OrleansDistributedCache(IGrainFactory grainFactory) : IDistributedC
         ArgumentNullException.ThrowIfNull(value);
         ArgumentNullException.ThrowIfNull(options);
 
-        var grain = _grainFactory.GetGrain<ICacheGrain<byte[]>>(key);
+        var grain = GetGrain(key);
 
         DateTimeOffset? absoluteExpiration = null;
         TimeSpan? slidingExpiration = null;
@@ -100,6 +100,7 @@ public class OrleansDistributedCache(IGrainFactory grainFactory) : IDistributedC
 
     /// <summary>
     /// Refreshes the sliding expiration of a cached entry.
+    /// Warning: sync-over-async here!
     /// </summary>
     /// <param name="key">The cache key.</param>
     /// <exception cref="ArgumentException">Thrown when key is null or empty.</exception>
@@ -116,12 +117,13 @@ public class OrleansDistributedCache(IGrainFactory grainFactory) : IDistributedC
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(key);
 
-        var grain = _grainFactory.GetGrain<ICacheGrain<byte[]>>(key);
+        var grain = GetGrain(key);
         await grain.RefreshAsync();
     }
 
     /// <summary>
     /// Removes a value from the cache.
+    /// Warning: sync-over-async here!
     /// </summary>
     /// <param name="key">The cache key.</param>
     /// <exception cref="ArgumentException">Thrown when key is null or empty.</exception>
@@ -138,7 +140,13 @@ public class OrleansDistributedCache(IGrainFactory grainFactory) : IDistributedC
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(key);
 
-        var grain = _grainFactory.GetGrain<ICacheGrain<byte[]>>(key);
+        var grain = GetGrain(key);
         await grain.RemoveAsync();
     }
+
+    private ICacheGrain<byte[]> GetGrain(string key)
+    {
+        return _grainFactory.GetGrain<ICacheGrain<byte[]>>(key);
+    }
+
 }
