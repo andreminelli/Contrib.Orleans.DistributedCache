@@ -1,5 +1,3 @@
-using System;
-
 namespace Contrib.Orleans.DistributedCache.Grains;
 
 /// <summary>
