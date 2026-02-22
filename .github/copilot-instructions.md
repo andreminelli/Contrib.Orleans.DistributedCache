@@ -7,7 +7,11 @@
 *   **`using` directives:** Group `using` directives with `System.*` namespaces first, followed by other namespaces in alphabetical order.
 *   **Nullability:** Enable nullable reference types (`<Nullable>enable</Nullable>`) in the project file and use null-forgiving operators (`!`) sparingly.
 *   **Asynchronous Programming:** Prefer the use of `async`/`await` patterns for asynchronous operations.
-*   **Tests**: Use xUnit 3, NSubstitute (mocking library) and Shouldly (assertion library) for unit tests; always use AAA pattern, with explicit comments for each one.
+
+## Tests
+*   Use xUnit 3, NSubstitute (mocking library) and Shouldly (assertion library) for unit tests.
+*   Always use AAA pattern, with explicit comments for each one.
+*   The test method names should follow the pattern: `MethodName_StateUnderTest_ExpectedBehavior` (e.g., `GetValue_KeyExists_ReturnsValue`).
 
 ## Post-Generation Actions
 
