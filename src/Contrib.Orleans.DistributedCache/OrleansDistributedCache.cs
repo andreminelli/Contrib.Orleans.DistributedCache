@@ -12,9 +12,6 @@ namespace Contrib.Orleans.DistributedCache;
 /// <summary>
 /// Orleans-based implementation of IDistributedCache.
 /// </summary>
-/// <remarks>
-/// Initializes a new instance of the OrleansDistributedCache class.
-/// </remarks>
 /// <param name="grainFactory">The Orleans grain factory.</param>
 /// <exception cref="ArgumentNullException">Thrown when grainFactory is null.</exception>
 public class OrleansDistributedCache(IGrainFactory grainFactory) : IDistributedCache
