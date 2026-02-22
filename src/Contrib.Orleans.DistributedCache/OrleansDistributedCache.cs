@@ -40,9 +40,9 @@ public class OrleansDistributedCache(IGrainFactory grainFactory) : IDistributedC
         ArgumentException.ThrowIfNullOrWhiteSpace(key);
 
         var grain = _grainFactory.GetGrain<ICacheGrain<byte[]>>(key);
-        var (exists, value, _) = await grain.GetAsync();
+        var result = await grain.GetAsync();
 
-        return exists ? value : null;
+        return result.Exists ? result.Value : null;
     }
 
     /// <summary>

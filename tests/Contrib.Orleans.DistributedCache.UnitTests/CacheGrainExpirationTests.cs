@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
+using Contrib.Orleans.DistributedCache;
 using Contrib.Orleans.DistributedCache.Grains;
 
 using Orleans.Hosting;
@@ -17,7 +18,10 @@ public class CacheGrainExpirationTests : IAsyncLifetime
     public async ValueTask InitializeAsync()
     {
         var builder = new InProcessTestClusterBuilder(initialSilosCount: 1);
-        builder.ConfigureSilo((options, siloBuilder) => siloBuilder.AddMemoryGrainStorage("cache-storage"));
+        builder.ConfigureSilo((options, siloBuilder) =>
+        {
+            siloBuilder.AddMemoryGrainStorage("cache-storage");
+        });
         _cluster = builder.Build();
         await _cluster.DeployAsync();
     }
@@ -42,14 +46,14 @@ public class CacheGrainExpirationTests : IAsyncLifetime
         await grain.SetAsync(value, DateTimeOffset.UtcNow.AddMilliseconds(200), null);
 
         // Assert immediate exists
-        var (existsBefore, _, _) = await grain.GetAsync();
-        existsBefore.ShouldBeTrue();
+        var resultBefore = await grain.GetAsync();
+        resultBefore.Exists.ShouldBeTrue();
 
         // Wait past expiration
         await Task.Delay(400, TestContext.Current.CancellationToken);
 
-        var (existsAfter, _, _) = await grain.GetAsync();
-        existsAfter.ShouldBeFalse();
+        var resultAfter = await grain.GetAsync();
+        resultAfter.Exists.ShouldBeFalse();
     }
 
     [Fact]
@@ -65,8 +69,8 @@ public class CacheGrainExpirationTests : IAsyncLifetime
         // Wait longer than sliding expiration without accessing
         await Task.Delay(350, TestContext.Current.CancellationToken);
 
-        var (existsAfter, _, _) = await grain.GetAsync();
-        existsAfter.ShouldBeFalse();
+        var resultAfter = await grain.GetAsync();
+        resultAfter.Exists.ShouldBeFalse();
     }
 
     [Fact]
@@ -81,15 +85,15 @@ public class CacheGrainExpirationTests : IAsyncLifetime
 
         // Wait half of sliding then access to reset
         await Task.Delay(150, TestContext.Current.CancellationToken);
-        var (exists1, _, _) = await grain.GetAsync();
-        exists1.ShouldBeTrue();
+        var result1 = await grain.GetAsync();
+        result1.Exists.ShouldBeTrue();
 
         // Wait slightly longer than half again (total > original sliding if not refreshed)
         await Task.Delay(200, TestContext.Current.CancellationToken);
 
         // Access again, should still exist because previous GetAsync refreshed last access
-        var (exists2, _, _) = await grain.GetAsync();
-        exists2.ShouldBeTrue();
+        var result2 = await grain.GetAsync();
+        result2.Exists.ShouldBeTrue();
     }
 
     [Fact]
@@ -111,7 +115,7 @@ public class CacheGrainExpirationTests : IAsyncLifetime
         // Wait longer than remaining time before refresh would have expired
         await Task.Delay(200, TestContext.Current.CancellationToken);
 
-        var (exists, _, _) = await grain.GetAsync();
-        exists.ShouldBeTrue();
+        var result = await grain.GetAsync();
+        result.Exists.ShouldBeTrue();
     }
 }

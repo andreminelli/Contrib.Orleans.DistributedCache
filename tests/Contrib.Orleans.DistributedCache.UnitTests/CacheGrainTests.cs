@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 
+using Contrib.Orleans.DistributedCache;
 using Contrib.Orleans.DistributedCache.Grains;
 
 using Orleans.Hosting;
@@ -19,7 +20,10 @@ public class CacheGrainTests : IAsyncLifetime
     public async ValueTask InitializeAsync()
     {
         var builder = new InProcessTestClusterBuilder(initialSilosCount: 1);
-        builder.ConfigureSilo((options, siloBuilder) => siloBuilder.AddMemoryGrainStorage("cache-storage"));
+        builder.ConfigureSilo((options, siloBuilder) =>
+        {
+            siloBuilder.AddMemoryGrainStorage("cache-storage");
+        });
         _cluster = builder.Build();
         await _cluster.DeployAsync();
     }
@@ -38,19 +42,19 @@ public class CacheGrainTests : IAsyncLifetime
     {
         var grain = _cluster!.Client.GetGrain<ICacheGrain<byte[]>>("test-key");
 
-        var (existsBefore, _, _) = await grain.GetAsync();
-        existsBefore.ShouldBeFalse();
+        var resultBefore = await grain.GetAsync();
+        resultBefore.Exists.ShouldBeFalse();
 
         var value = new byte[] { 1, 2, 3 };
         await grain.SetAsync(value, DateTimeOffset.UtcNow.AddMinutes(5), TimeSpan.FromMinutes(1));
-        var (existsAfter, stored, _) = await grain.GetAsync();
-        existsAfter.ShouldBeTrue();
-        stored.ShouldNotBeNull();
-        stored.ShouldBe(value);
+        var resultAfter = await grain.GetAsync();
+        resultAfter.Exists.ShouldBeTrue();
+        resultAfter.Value.ShouldNotBeNull();
+        resultAfter.Value.ShouldBe(value);
 
         await grain.RemoveAsync();
 
-        var (existsFinal, _, _) = await grain.GetAsync();
-        existsFinal.ShouldBeFalse();
+        var resultFinal = await grain.GetAsync();
+        resultFinal.Exists.ShouldBeFalse();
     }
 }

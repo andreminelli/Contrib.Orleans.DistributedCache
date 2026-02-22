@@ -20,11 +20,11 @@ public class CacheGrain<T>(
     private readonly IPersistentState<CacheGrainState<T>> _state = state;
 
     /// <inheritdoc/>
-    public async Task<(bool Exists, T? Value, DateTimeOffset? ExpirationTime)> GetAsync()
+    public async Task<CacheResult<T>> GetAsync()
     {
         if (!_state.State.HasValue)
         {
-            return (false, default, null);
+            return CacheResult<T>.NotFound;
         }
 
         var now = DateTimeOffset.UtcNow;
@@ -33,7 +33,7 @@ public class CacheGrain<T>(
         {
             _state.State.HasValue = false;
             await _state.WriteStateAsync();
-            return (false, default, null);
+            return CacheResult<T>.NotFound;
         }
 
         if (_state.State.SlidingExpiration.HasValue)
@@ -45,16 +45,16 @@ public class CacheGrain<T>(
             {
                 _state.State.HasValue = false;
                 await _state.WriteStateAsync();
-                return (false, default, null);
+                return CacheResult<T>.NotFound;
             }
 
             _state.State.LastAccessTime = now;
             await _state.WriteStateAsync();
 
-            return (true, _state.State.Value, now.Add(_state.State.SlidingExpiration.Value));
+            return CacheResult<T>.Found(_state.State.Value, now.Add(_state.State.SlidingExpiration.Value));
         }
 
-        return (true, _state.State.Value, _state.State.AbsoluteExpiration);
+        return CacheResult<T>.Found(_state.State.Value, _state.State.AbsoluteExpiration);
     }
 
     /// <inheritdoc/>

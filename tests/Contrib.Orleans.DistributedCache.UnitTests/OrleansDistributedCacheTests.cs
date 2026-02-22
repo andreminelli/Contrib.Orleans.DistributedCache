@@ -33,7 +33,7 @@ public class OrleansDistributedCacheTests : IAsyncLifetime
     public async Task GetAsync_KeyNotFound_ReturnsNull()
     {
         // Arrange
-        _grain.GetAsync().Returns(Task.FromResult((false, (byte[]?)null, (DateTimeOffset?)null)));
+        _grain.GetAsync().Returns(Task.FromResult(CacheResult<byte[]>.NotFound));
 
         // Act
         var result = await _cache.GetAsync("missing");
@@ -47,7 +47,7 @@ public class OrleansDistributedCacheTests : IAsyncLifetime
     {
         // Arrange
         var value = new byte[] { 1, 2, 3 };
-        _grain.GetAsync().Returns(Task.FromResult((true, (byte[]?)value, (DateTimeOffset?)null)));
+        _grain.GetAsync().Returns(Task.FromResult(CacheResult<byte[]>.Found(value, null)));
 
         // Act
         var result = await _cache.GetAsync("found");
@@ -62,7 +62,7 @@ public class OrleansDistributedCacheTests : IAsyncLifetime
     {
         // Arrange
         var value = new byte[] { 4, 5, 6 };
-        _grain.GetAsync().Returns(Task.FromResult((true, (byte[]?)value, (DateTimeOffset?)null)));
+        _grain.GetAsync().Returns(Task.FromResult(CacheResult<byte[]>.Found(value, null)));
 
         // Act
         var result = _cache.Get("sync");

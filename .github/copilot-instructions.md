@@ -12,6 +12,7 @@
 *   Use xUnit 3, NSubstitute (mocking library) and Shouldly (assertion library) for unit tests.
 *   Always use AAA pattern, with explicit comments for each one.
 *   The test method names should follow the pattern: `MethodName_StateUnderTest_ExpectedBehavior` (e.g., `GetValue_KeyExists_ReturnsValue`).
+*   After any change, run the tests and check if everything is still ok. 
 
 ## Post-Generation Actions
 

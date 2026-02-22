@@ -14,8 +14,8 @@ public interface ICacheGrain<T> : IGrainWithStringKey
     /// <summary>
     /// Gets the cached value if it exists and has not expired.
     /// </summary>
-    /// <returns>A tuple of (exists, value, expirationTime)</returns>
-    Task<(bool Exists, T? Value, DateTimeOffset? ExpirationTime)> GetAsync();
+    /// <returns>A CacheGetResult containing the existence status, value, and expiration time.</returns>
+    Task<CacheResult<T>> GetAsync();
 
     /// <summary>
     /// Sets the cached value with optional expiration.
