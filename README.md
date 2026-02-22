@@ -10,7 +10,6 @@ A NuGet library that implements `IDistributedCache` using Microsoft Orleans as t
 - ✅ **State Persistence** - Optional state management for persistence
 - ✅ **Async-First Design** - Built with async/await patterns
 - ✅ **.NET 10 & C# 14** - Modern C# features with nullable reference types
-- ✅ **Production Ready** - Comprehensive test coverage with xUnit
 
 ## Architecture
 
@@ -32,12 +31,6 @@ A NuGet library that implements `IDistributedCache` using Microsoft Orleans as t
 - Creates grain instances for each cache key
 - Maps `DistributedCacheEntryOptions` to grain state
 - Handles both sync and async operations
-
-## Installation
-
-```bash
-dotnet add package Contrib.Orleans.DistributedCache
-```
 
 ## Usage
 
@@ -62,140 +55,38 @@ var host = new HostBuilder()
 await host.RunAsync();
 ```
 
-2. **Use in Your Application**
-
-```csharp
-public class MyService
-{
-    private readonly IDistributedCache _cache;
-
-    public MyService(IDistributedCache cache)
-    {
-        _cache = cache;
-    }
-
-    public async Task CacheDataAsync(string key, byte[] value)
-    {
-        var options = new DistributedCacheEntryOptions
-        {
-            AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10),
-            SlidingExpiration = TimeSpan.FromMinutes(5)
-        };
-
-        await _cache.SetAsync(key, value, options);
-    }
-
-    public async Task<byte[]?> RetrieveDataAsync(string key)
-    {
-        return await _cache.GetAsync(key);
-    }
-
-    public async Task InvalidateDataAsync(string key)
-    {
-        await _cache.RemoveAsync(key);
-    }
-}
-```
-
-## Configuration
-
-### Absolute Expiration
-
-```csharp
-var options = new DistributedCacheEntryOptions
-{
-    AbsoluteExpiration = DateTimeOffset.UtcNow.AddHours(1)
-};
-
-await cache.SetAsync("key", data, options);
-```
-
-### Sliding Expiration
-
-```csharp
-var options = new DistributedCacheEntryOptions
-{
-    SlidingExpiration = TimeSpan.FromMinutes(30)
-};
-
-await cache.SetAsync("key", data, options);
-```
-
-### Combined Expiration
-
-```csharp
-var options = new DistributedCacheEntryOptions
-{
-    AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1),
-    SlidingExpiration = TimeSpan.FromMinutes(30)
-};
-
-await cache.SetAsync("key", data, options);
-```
-
-## API Reference
-
-### IDistributedCache Methods
-
-#### Get/GetAsync
-Retrieves a value from the cache. Returns `null` if the key doesn't exist or has expired.
-
-```csharp
-byte[]? value = cache.Get("key");
-byte[]? value = await cache.GetAsync("key");
-```
-
-#### Set/SetAsync
-Stores a value in the cache with optional expiration settings.
-
-```csharp
-cache.Set("key", data, options);
-await cache.SetAsync("key", data, options);
-```
-
-#### Remove/RemoveAsync
-Removes a value from the cache.
-
-```csharp
-cache.Remove("key");
-await cache.RemoveAsync("key");
-```
-
-#### Refresh/RefreshAsync
-Refreshes the sliding expiration time for a cached entry.
-
-```csharp
-cache.Refresh("key");
-await cache.RefreshAsync("key");
-```
+The `AddOrleansDistributedCacheGrains()` method automatically configures memory grain storage for cache entries.
 
 ## Technical Details
 
 ### Grain Identity
-- Cache keys directly map to grain string IDs
-- Each cache key gets its own grain instance
-- Grains are automatically activated on first access
+- Cache keys directly map to Orleans string grain IDs
+- Each cache key gets its own `ICacheGrain<byte[]>` grain instance
+- Grains are automatically activated on first access via `IGrainFactory.GetGrain<ICacheGrain<byte[]>>(key)`
 
-### State Persistence
-- Uses Orleans `IPersistentState<T>` for state management
-- State is persisted to configured storage provider
-- Optional state management for in-memory operation
+### State Management
+- Uses Orleans `IPersistentState<CacheGrainState<T>>` for state management
+- By default, memory grain storage is used (`AddMemoryGrainStorage("cache-storage")`)
+- State includes: cached value, absolute expiration, sliding expiration, and last access time
+- For persistent storage, configure a different storage provider before calling `AddOrleansDistributedCacheGrains()`
 
 ### Expiration Handling
-- Absolute expiration: Entry expires at specific time
-- Sliding expiration: Resets on each access
-- Combined: Uses whichever expires first
-- Expired entries checked on Get, returning null
+- **On-demand cleanup**: Expired entries are not proactively cleaned up. Instead, expiration is checked on access (Get, Refresh), and expired entries are cleared from state at that time
+- Expired entries return `null` to callers and are removed from state
 
 ### Thread Safety
 - Orleans guarantees single-threaded grain execution
 - No additional locking required
-- Safe for concurrent access from multiple silos
+- Safe for concurrent access from multiple Orleans silos
+- All operations on a specific cache key are serialized through the grain
 
 ### Performance
 - Grain per key = direct, fast lookups
 - Distributed across Orleans cluster
 - State persistence is async and non-blocking
+- Synchronous methods (`Get`, `Set`, `Remove`, `Refresh`) use `.GetAwaiter().GetResult()` internally
+    - This is acceptable for Orleans-based cache implementations where latency is typically high
+    - Prefer async methods when possible to avoid blocking threads
 
 ## Testing
 
