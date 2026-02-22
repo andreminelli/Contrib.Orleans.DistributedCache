@@ -2,8 +2,6 @@ using System;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
 
-using Orleans;
-
 namespace Contrib.Orleans.DistributedCache;
 
 /// <summary>
@@ -22,11 +20,7 @@ public static class ServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
 
-        services.AddSingleton<IDistributedCache>(serviceProvider =>
-        {
-            var grainFactory = serviceProvider.GetRequiredService<IGrainFactory>();
-            return new OrleansDistributedCache(grainFactory);
-        });
+        services.AddSingleton<IDistributedCache, OrleansDistributedCache>();
 
         return services;
     }

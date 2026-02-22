@@ -11,13 +11,14 @@ public static class SiloBuilderExtensions
     /// <summary>
     /// Configures cache grains for the Orleans silo.
     /// </summary>
-    /// <param name="siloBuilder">The silo builder.</param>
     /// <returns>The silo builder for chaining.</returns>
     /// <exception cref="ArgumentNullException">Thrown when siloBuilder is null.</exception>
     public static ISiloBuilder AddOrleansDistributedCacheGrains(
         this ISiloBuilder siloBuilder)
     {
         ArgumentNullException.ThrowIfNull(siloBuilder);
+
+        siloBuilder.AddMemoryGrainStorage("cache-storage");
 
         return siloBuilder;
     }

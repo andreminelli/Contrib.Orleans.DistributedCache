@@ -18,10 +18,7 @@ public class CacheGrainExpirationTests : IAsyncLifetime
     public async ValueTask InitializeAsync()
     {
         var builder = new InProcessTestClusterBuilder(initialSilosCount: 1);
-        builder.ConfigureSilo((options, siloBuilder) =>
-        {
-            siloBuilder.AddMemoryGrainStorage("cache-storage");
-        });
+        builder.ConfigureSilo((options, siloBuilder) => siloBuilder.AddOrleansDistributedCacheGrains());
         _cluster = builder.Build();
         await _cluster.DeployAsync();
     }
