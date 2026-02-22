@@ -1,0 +1,30 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 18
+VisualStudioVersion = 18.3.11505.172
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Contrib.Orleans.DistributedCache", "src\Contrib.Orleans.DistributedCache\Contrib.Orleans.DistributedCache.csproj", "{E472E6CD-1BE1-2825-79AF-794E66B89C04}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{4FD4D3A1-4C2B-4855-AF11-DCA90D541D40}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+		README.md = README.md
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E472E6CD-1BE1-2825-79AF-794E66B89C04}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E472E6CD-1BE1-2825-79AF-794E66B89C04}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E472E6CD-1BE1-2825-79AF-794E66B89C04}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E472E6CD-1BE1-2825-79AF-794E66B89C04}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {F9562C43-E4F9-42E1-AF56-75A5EC120109}
+	EndGlobalSection
+EndGlobal
